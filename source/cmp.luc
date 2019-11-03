@@ -1,0 +1,20 @@
+module cmp (
+    input z,  // z
+    input v,  // v
+    input n,  // n
+    input alufn[3], //ALUFN[2:0]
+    output out[16]
+  ) {
+  sig lsb_comp; // LSB of the output
+
+  always {
+    case(alufn){
+      3b011: lsb_comp = z;           //ALUFN[2:0] = 011 equal
+      3b101: lsb_comp = n^v;         //ALUFN[2:0] = 101 less than
+      3b111: lsb_comp = z | (n^v);   //ALUFN[2:0] = 111 less or equal than
+      default: lsb_comp = 0;
+    }
+    out[15:1] = 15b0;
+    out[0] = lsb_comp;
+  }
+}

@@ -1,0 +1,23 @@
+// add and subtract 
+module addSub (
+    input a[16],  // a
+    input b[16],  // b
+    input alufn0, // alufn0
+    output out[16], // output ans
+    output z, // if all bits are 0;
+    output v, // if overflows;
+    output n  // if negative;
+  ) 
+  {
+  sig xb[16];  //xb
+  sig sum[16]; //sum 
+
+  always {
+    xb = 16x{alufn0} ^ b;
+    sum = a + xb + alufn0;
+    out = sum;
+    n = sum[15];
+    v = (a[15] & xb[15] & (~sum[15])) | ((~a[15]) & (~xb[15]) & sum[15]);
+    z = (sum == 0);
+  }
+}

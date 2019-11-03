@@ -1,0 +1,17 @@
+module boole (
+    input a[16],  // a
+    input b[16],  // b
+    input alufn[4], //ALUFN[3:0]
+    output out[16]
+  ) {
+
+  always {
+    case(alufn){
+      4b1000: out = a & b;     // ALUFN[3:0] = 1000: AND
+      4b1110: out = a | b;     // ALUFN[3:0] = 1110: OR
+      4b0110: out = a ^ b;     // ALUFN[3:0] = 0110: XOR
+      4b1010: out = a;         // ALUFN[3:0] = 1010: A
+      default: out = 16x{0};   // default: 0
+    }
+  }
+}

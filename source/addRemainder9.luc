@@ -1,0 +1,16 @@
+module addRemainder9 (
+    input sum[16], // sum of a + b,
+    output out[16] 
+  ) {
+  sig nine[16];
+  sig quotient[16];
+  remainder rem;
+  always {
+    nine = 9;
+    quotient = sum / nine;
+    rem.a = sum;
+    rem.b = nine;
+    rem.quotient = quotient;
+    out = rem.out;
+  }
+}

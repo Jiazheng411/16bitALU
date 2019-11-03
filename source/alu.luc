@@ -1,0 +1,122 @@
+// alu
+
+// operation alufn[5:0]
+// ADD        000000
+// SUB        000001
+// MUL        000010
+// DIV        000011
+// REM        000100
+// AND        011000
+// OR         011110
+// XOR        010110
+// A          011010
+// SHL        100000
+// SHR        100001
+// SRA        100011
+// CMPEQ      110011
+// CMPLT      110101
+// CMPLE      110111
+
+
+module alu (
+    input a[16],  // clock
+    input b[16],  // reset
+    input alufn[6],
+    output out[16],
+    output z,
+    output v,
+    output n
+  ) {
+  
+  //initialize subcircuits of alu
+  
+  addSub addSub;           //adder
+  cmp cmp;                 //comparator
+  boole boole;             //boolean
+  shifter shifter;         //shifter
+  mul mul;                 //multiplier
+  dividor dividor;         //dividor
+  remainder remainder;     //remainder
+
+  always {
+  
+    //connect inputs to adder/subtractor inputs
+    addSub.a = a;
+    addSub.b = b;
+    addSub.alufn0 = alufn[0];
+   
+    // z, v, n output of alu
+    z = 0;
+    v = 0;
+    n = 0;
+    
+    //connect inputs to comparator inputs
+    cmp.z = addSub.z;
+    cmp.v = addSub.v;
+    cmp.n = addSub.n;
+    cmp.alufn = alufn[2:0];
+    
+    //connect inputs to boolean inputs    
+    boole.a = a;
+    boole.b = b;
+    boole.alufn = alufn[3:0];
+    
+    //connect inputs to shifter inputs
+    shifter.a = a;
+    shifter.b = b;
+    shifter.alufn = alufn[1:0];
+    
+    
+    //connect inputs to multiplier inputs
+    mul.a = a;
+    mul.b = b;
+    
+    //connect inputs to dividor inputs
+    dividor.a = a;
+    dividor.b = b;
+    
+    //connect inputs to remainder inputs
+    remainder.a = a;
+    remainder.b = b;
+    remainder.quotient = dividor.out; 
+    
+    //choose output out value base on alufn
+    case(alufn[5:4])
+    {
+      2b00:
+      case(alufn[2:0])
+      {  
+        //add/subtract
+        3b000 : out = addSub.out; z = addSub.z; v = addSub.v; n = addSub.n;
+        3b001 : out = addSub.out; z = addSub.z; v = addSub.v; n = addSub.n;
+          
+        //multiplier
+        3b010: out = mul.out;
+          
+        //dividor
+        3b011: out = dividor.out;
+        
+        //remainder
+        3b100: out = remainder.out;
+          
+        //defalut: 0
+        default: out = 0;
+      }
+        
+      //boolean
+      2b01: out = boole.out;
+      
+      //shifter
+      2b10: out = shifter.out;
+      
+      //comparator
+      2b11: z = addSub.z; v = addSub.v; n = addSub.n; out = cmp.out;
+      
+      //defalut: 0
+      default : out = 0;   
+           
+    }
+    
+  }
+  
+}
