@@ -13,7 +13,8 @@
 * when io_dip[0][0] is on, if error occurs, test will stop and display the wrong case
 * if io_dip[0][]0 is off, error occurs, test won't stop and will continue till the end
 * testing stops after all 25 test cases is tested
-* oprations of alu
+
+## oprations of alu
    *  operation alufn[5:0]
    *  ADD        000000
    *  SUB        000001
