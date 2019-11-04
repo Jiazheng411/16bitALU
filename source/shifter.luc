@@ -1,3 +1,5 @@
+// shifter, shift left, shift right, shift right arith
+
 module shifter (
     input a[16],    // a, 16 bit number that needs to be shifted
     input b[16],    // b, 16 bit number that represnets how many bits a needs to be shifted

@@ -1,8 +1,8 @@
-// add and subtract 
+// add and subtract  a + b or a - b
 module addSub (
     input a[16],  // a
     input b[16],  // b
-    input alufn0, // alufn0
+    input alufn0, // ALUFN[0]
     output out[16], // output ans
     output z, // if all bits are 0;
     output v, // if overflows;

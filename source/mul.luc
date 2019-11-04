@@ -1,3 +1,5 @@
+//multiplier
+
 module mul (
     input a[16],  // a
     input b[16],  // b
@@ -5,6 +7,6 @@ module mul (
   ) {
 
   always {
-    out = a*b;
+    out = a * b;
   }
 }

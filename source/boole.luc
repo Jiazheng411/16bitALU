@@ -1,3 +1,5 @@
+// boolean functions, and, or, xor, a
+
 module boole (
     input a[16],  // a
     input b[16],  // b

@@ -1,3 +1,5 @@
+//( a + b ) / 9, will be used in game, not inplemented in alu yet
+
 module addRemainder9 (
     input sum[16], // sum of a + b,
     output out[16] 

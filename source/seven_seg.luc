@@ -1,3 +1,5 @@
+// output corresponding 7-segment display sequence for a number
+
 module seven_seg (
     input char[4],
     output segs[7]

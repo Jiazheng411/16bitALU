@@ -1,3 +1,5 @@
+//comparators =, <, <=
+
 module cmp (
     input z,  // z
     input v,  // v

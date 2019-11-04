@@ -1,3 +1,5 @@
+// remainder computes a % b
+
 module remainder (
     input a[16],  // divisor
     input b[16],  // dividend

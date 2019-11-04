@@ -19,9 +19,9 @@
 
 
 module alu (
-    input a[16],  // clock
-    input b[16],  // reset
-    input alufn[6],
+    input a[16],  // a
+    input b[16],  // b
+    input alufn[6], //ALUFN[5:0]
     output out[16],
     output z,
     output v,

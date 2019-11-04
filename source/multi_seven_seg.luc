@@ -1,3 +1,5 @@
+// multi digits seven segment, show numbers on 7-segment display
+
 module multi_seven_seg #(
     DIGITS = 4 : DIGITS > 0,
     DIV = 16 : DIV >= 0

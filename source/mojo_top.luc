@@ -1,3 +1,5 @@
+// to test functionalities of alus
+
 module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
@@ -36,30 +38,36 @@ module mojo_top (
     }
     
   }
-  //mycounter counter(.rst(rst));
+  //declare counter without clk signal, so as to change clk in always block to stop the clk;
+  //size 5 to test 25 testcases, be able to count from 0 to 31
+  //div 24, make sure the duration of each testcases is appropriate
   counter counter(#SIZE(5), #DIV(24),  .rst(rst));
   
+  //declare alu
   alu alu;
-  sig testcases[25][7][16];
-  sig test_case_index[5];
-  sig test_case_alunf[6];
-  sig test_case_a[16];
-  sig test_case_b[16];
-  sig alu_z;
-  sig alu_v;
-  sig alu_n;
-  sig alu_result[16];
-  sig correct_z;
-  sig correct_v;
-  sig correct_n;
-  sig correct_result[16];
   
-  sig display_hex_low[4];
-  sig display_hex_high[4];
+  // variables to be used
+  sig testcases[25][7][16];   // test cases array, contains all test cases to be tested
+  sig test_case_index[5];     // test case index of the test cases array
+  sig test_case_alunf[6];     // ALUFN[5:0] for this test case
+  sig test_case_a[16];        // input a for this test case
+  sig test_case_b[16];        // input b for this test case
+  sig alu_z;                  // z output from alu
+  sig alu_v;                  // v output from alu
+  sig alu_n;                  // n output from alu
+  sig alu_result[16];         // out output from alu
+  sig correct_z;              // correct answer of z for this test case
+  sig correct_v;              // correct answer of v for this test case
+  sig correct_n;              // correct answer of n for this test case
+  sig correct_result[16];     // correct answer of out for this test case
+  
+  //display test case index using 8 bits hex
+  sig display_hex_low[4];     // least significant 4 bits of 8 bit hex number 
+  sig display_hex_high[4];    // most significant 4 bits of 8 bit hex number 
   
   
   always {
-    counter.clk = clk;
+    counter.clk = clk;      // connect clk to counter
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
@@ -72,9 +80,9 @@ module mojo_top (
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits
     
-    
-    testcases = 
-      //alunf       a         b      out       z     v     n
+    // 25 testcases in the format of 
+    //ALUNF[5:0]  a   b  correct_ans  correct_z  correct_v  correct_n
+    testcases =      
     { 
       {16b000000, 16h0002, 16h0002, 16h0004, 16b0, 16b0, 16b0},              //index: 24,11000    2 + 2 = 4
       {16b000000, 16h7fff, 16h0001, 16h8001, 16b0, 16b1, 16b1},              //index: 23,10111    32767 + 1 = -32768, overflow
@@ -111,6 +119,7 @@ module mojo_top (
       
     };
     
+    // get testcase a,b,ALUFN[5:0] from testcases array accounding to the counter value representing test_case_index
     test_case_index = counter.value;
     test_case_alunf = testcases[test_case_index][6][5:0];
     test_case_a = testcases[test_case_index][5];
@@ -120,6 +129,7 @@ module mojo_top (
     correct_v = testcases[test_case_index][1][0];
     correct_n = testcases[test_case_index][0][0];
     
+    // get results form alu
     alu.a = test_case_a;
     alu.b = test_case_b;
     alu.alufn = test_case_alunf;
@@ -128,30 +138,36 @@ module mojo_top (
     alu_v = alu.v;
     alu_n = alu.n;
     
-    io_led[2][7:0] = alu_result[15:8];
-    io_led[1][7:0] = alu_result[7:0];
-    io_led[0][7:3] = 5x{(correct_result == alu_result)};
-    io_led[0][0] = (correct_z == alu_z);
-    io_led[0][1] = (correct_v == alu_v);
-    io_led[0][2] = (correct_n == alu_n);
-    //io_led[0][4:0] = test_case_index;
+    // display the correctness of answers
+    io_led[2][7:0] = alu_result[15:8];                     // display most significant 16 bits of alu.out for easy debug
+    io_led[1][7:0] = alu_result[7:0];                      // display least significant 16 bits of alu.out for easy debug
+    io_led[0][7:3] = 5x{(correct_result == alu_result)};   // io_led[0][7:3] are on when alu.out is correct
+    io_led[0][0] = (correct_z == alu_z);                   // io_led[0][0] is on when alu.z is correct
+    io_led[0][1] = (correct_v == alu_v);                   // io_led[0][0] is on when alu.v is correct
+    io_led[0][2] = (correct_n == alu_n);                   // io_led[0][0] is on when alu.n is correct
     
+    // index in hex
     display_hex_low = counter.value[3:0];
     display_hex_high = counter.value[4];
     
+    // display test case index in 7-seg display in hex
     seg.values = {4h0, 4h0, display_hex_high, display_hex_low};
      
     io_seg = ~seg.seg;      // connect segments to the driver
     io_sel = ~seg.sel;      // connect digit select to the driver
     
+    // mistake stopper
     mistake_stopper.d = ((correct_result != alu_result) | (correct_z != alu_z) | (correct_v != alu_v) | (correct_n != alu_n));
     
+    // stop the clk of the counter when io_dip[0][0] is on and mistake occurs
+    // if mistakes occur but io_dip[0][0] is not on, continue without stopping
     if(io_dip[0][0]){
       if(mistake_stopper.q){
            counter.clk = 0;
       }
     }
     
+    // stop the clk of the counter when finish running 25 test cases
     end_stopper.d = (counter.value == 5b11000);
     if(end_stopper.q){
       counter.clk = 0;

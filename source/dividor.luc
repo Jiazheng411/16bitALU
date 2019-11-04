@@ -1,6 +1,8 @@
+//dividor compute a / b
+
 module dividor (
-    input a[16],  // clock
-    input b[16],  // reset
+    input a[16],  // a
+    input b[16],  // b
     output out[16]
   ) {
 
