@@ -3,7 +3,7 @@
 
 ## How to use
 * click rst button, mojo will run all 25 test cases with display of the correctness of alu output
-    io_led[2] display most significant 16 bits of alu.out for easy debug
+   * * io_led[2] display most significant 16 bits of alu.out for easy debug
     io_led[1] display least significant 16 bits of alu.out for easy debug
     io_led[0][7:3] are on when alu.out is correct
     io_led[0][0] is on when alu.z is correct
