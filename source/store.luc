@@ -1,30 +1,30 @@
 module store (
     input clk,
-    input store_a_sig,
-    input store_b_sig,
+    input store_a_sig,   // to store a signal
+    input store_b_sig,   // to store b signal
     input dip[16],
     output currenta[16],
     output currentb[16]
   ) {
   
   .clk(clk){
-  edge_detector edge_detector_a(#RISE(1), #FALL(0)); // edge_detector  A 
-  edge_detector edge_detector_b(#RISE(1), #FALL(0)); // edge_detector   B
+  edge_detector edge_detector_a(#RISE(1), #FALL(0)); // edge_detector  for button A 
+  edge_detector edge_detector_b(#RISE(1), #FALL(0)); // edge_detector  for button B
   }
   
   button_conditioner button_condA(.clk(clk), .in(store_a_sig)); // button conditioner for debouncing of button
   button_conditioner button_condB(.clk(clk), .in(store_b_sig)); // button conditioner for debouncing of button
 
-  dff store_a[16](.clk(clk)); // here set 2 dff  to store the value of 16bits A & B
-  dff store_b[16](.clk(clk)); //also connect to clk
+  dff store_a[16](.clk(clk)); 
+  dff store_b[16](.clk(clk)); 
 
   always {
     edge_detector_a.in = button_condA.out; // put in conditions when buttons are pressed in edge detector
     edge_detector_b.in = button_condB.out; // 
-    if(edge_detector_a.out){ //  button A is pressed
+    if(edge_detector_a.out){ // button A is pressed
         store_a.d = dip; // set the register of A to store the value of the hardware switches
     }
-    if(edge_detector_b.out){ // i button B is presssed
+    if(edge_detector_b.out){ // button B is presssed
         store_b.d = dip; // set the register of B to store the value of the hardware switches
     }
     currenta = store_a.q; // get value of A

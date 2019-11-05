@@ -33,7 +33,7 @@ module mojo_top (
       autotest autotest;
   
     }
-    //
+    // declare store tool
     store store;
     
   }
@@ -53,25 +53,28 @@ module mojo_top (
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits
     
+    // whether it is auto test mode or manual testing mode; 1-auto, 0-manual
     auto_test_mode = io_dip[0][1];
     
-    store.store_a_sig = io_button[3]; // set the left button to store the switches value to a
-    store.store_b_sig = io_button[4]; // set the right button to store the switches value to b
-    store.dip[7:0] = io_dip[1]; // as the switches are in a set, right set of 8 to the 8 7:LSB value
-    store.dip[15:8] = io_dip[2]; // set the middle set to the MSB:8 values
+    // manual testing
+    store.store_a_sig = io_button[3]; // press left button to store dip value of a
+    store.store_b_sig = io_button[4]; // press right button to store dip value of a
+    store.dip[7:0] = io_dip[1];  // 8 LSB
+    store.dip[15:8] = io_dip[2]; // 8 MSB
     
-    alu.a = store.currenta; // connect the stored A values to the ALU A
-    alu.b = store.currentb; // connect the stored B values to the ALU B
-    alu.alufn = io_dip[0][7:2]; // set ALUFN to be the 6 bit of the first set of dip switches
-    io_led[0][7:2] = io_dip[0][7:2];
+    alu.a = store.currenta; // alu a is store a 
+    alu.b = store.currentb; // alu b is store b 
+    alu.alufn = io_dip[0][7:2]; // ALUFN: 6 bit of dip 
+    io_led[0][7:2] = io_dip[0][7:2]; // display ALUFN
     
-    
+    // display alu.out using leds
     io_led[2][7:0] = alu.out[15:8];
     io_led[1][7:0] = alu.out[7:0];
     
-    
+    // whether auto test will stop when error occurs
     autotest.stop_when_error = io_dip[0][0];
     
+    // auto test
     if(auto_test_mode){
     io_led = autotest.leds;
     io_seg = autotest.iosegvalues;
