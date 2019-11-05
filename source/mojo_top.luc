@@ -21,6 +21,7 @@ module mojo_top (
   ) {
   
   sig rst;                  // reset signal
+  sig auto_test_mode;
   
   .clk(clk) {
     // The reset conditioner is used to synchronize the reset signal to the FPGA
@@ -29,45 +30,17 @@ module mojo_top (
     .rst(rst){
     
       // declare seven_seg display
-      multi_seven_seg seg;
-        
-      // declare stopper
-      dff mistake_stopper;
-      dff end_stopper;
-      
+      autotest autotest;
+  
     }
+    //
+    store store;
     
   }
-  //declare counter without clk signal, so as to change clk in always block to stop the clk;
-  //size 5 to test 25 testcases, be able to count from 0 to 31
-  //div 24, make sure the duration of each testcases is appropriate
-  counter counter(#SIZE(5), #DIV(24),  .rst(rst));
-  
-  //declare alu
   alu alu;
-  
-  // variables to be used
-  sig testcases[25][7][16];   // test cases array, contains all test cases to be tested
-  sig test_case_index[5];     // test case index of the test cases array
-  sig test_case_alunf[6];     // ALUFN[5:0] for this test case
-  sig test_case_a[16];        // input a for this test case
-  sig test_case_b[16];        // input b for this test case
-  sig alu_z;                  // z output from alu
-  sig alu_v;                  // v output from alu
-  sig alu_n;                  // n output from alu
-  sig alu_result[16];         // out output from alu
-  sig correct_z;              // correct answer of z for this test case
-  sig correct_v;              // correct answer of v for this test case
-  sig correct_n;              // correct answer of n for this test case
-  sig correct_result[16];     // correct answer of out for this test case
-  
-  //display test case index using 8 bits hex
-  sig display_hex_low[4];     // least significant 4 bits of 8 bit hex number 
-  sig display_hex_high[4];    // most significant 4 bits of 8 bit hex number 
-  
-  
+
   always {
-    counter.clk = clk;      // connect clk to counter
+    
     reset_cond.in = ~rst_n; // input raw inverted reset signal
     rst = reset_cond.out;   // conditioned reset
     
@@ -80,99 +53,31 @@ module mojo_top (
     io_seg = 8hff;          // turn segments off
     io_sel = 4hf;           // select no digits
     
-    // 25 testcases in the format of 
-    //ALUNF[5:0]  a   b  correct_ans  correct_z  correct_v  correct_n
-    testcases =      
-    { 
-      {16b000000, 16h0002, 16h0002, 16h0004, 16b0, 16b0, 16b0},              //index: 24,11000    2 + 2 = 4
-      {16b000000, 16h7fff, 16h0001, 16h8001, 16b0, 16b1, 16b1},              //index: 23,10111    32767 + 1 = -32768, overflow
-      {16b000000, 16hfff6, 16h000a, 16h0000, 16b1, 16b0, 16b0},              //index: 22,10110    -10 + 10 = 0
-      
-      {16b000001, 16h0002, 16h0002, 16h0000, 16b1, 16b0, 16b0},              //index: 21,10101    2 - 2 = 0
-      {16b000001, 16h8000, 16h0001, 16h7fff, 16b0, 16b1, 16b0},              //index: 20,10100    -32768 - 1 = 32767, overflow,
-      {16b000001, 16h000a, 16h0005, 16h0005, 16b0, 16b0, 16b0},              //index: 19,10011    10 - 5 = 5
-      {16b000001, 16hfff6, 16h0005, 16hfff1, 16b0, 16b0, 16b1},              //index: 18,10010    -10 - 5 = -15
-      
-      {16b000010, 16h000a, 16h000a, 16h0064, 16b0, 16b0, 16b0},              //index: 17,10001    10 * 10 = 100
-      {16b000011, 16h000a, 16h0002, 16h0005, 16b0, 16b0, 16b0},              //index: 16,10000    10 / 2 = 5
-      {16b000011, 16h000f, 16h0006, 16h0002, 16b0, 16b0, 16b0},              //index: 15,01111    15 / 6 = 2
-      {16b000100, 16h000a, 16h0002, 16h0000, 16b0, 16b0, 16b0},              //index: 14,01110    10 % 2 = 0
-      {16b000100, 16h000f, 16h0006, 16h0003, 16b0, 16b0, 16b0},              //index: 13,01101    15 % 6 = 3
-      
-      {16b011000, 16b1010101111000101, 16b1111001101010100, 16b1010001101000100, 16b0, 16b0, 16b0},         //index: 12,01100 and
-      {16b011110, 16b1111001101010100, 16b1010101111000101, 16b1111101111010101, 16b0, 16b0, 16b0},         //index: 11,01011 or
-      {16b010110, 16b1010101111000101, 16b1111001101010100, 16b0101100010010001, 16b0, 16b0, 16b0},         //index: 10,01010 xor
-      {16b011010, 16b1010101111000101, 16b1111001101010100, 16b1010101111000101, 16b0, 16b0, 16b0},         //index: 9,01001  a
-      
-      {16b110011, 16h0002, 16h0002, 16h0001, 16b1, 16b0, 16b0},              //index: 8,01000    2 == 2
-      {16b110011, 16h0003, 16h0002, 16h0000, 16b0, 16b0, 16b0},              //index: 7,00111    3 == 2
-      
-      {16b110101, 16h8000, 16h0001, 16h0001, 16b0, 16b1, 16b0},              //index: 6,00110    -32768 < 1
-      {16b110101, 16h000a, 16h0005, 16h0000, 16b0, 16b0, 16b0},              //index: 5,00101    10 < 5
-      
-      {16b110111, 16hfffb, 16h0005, 16h0001, 16b0, 16b0, 16b1},              //index: 4,00100   -5 <= 5 
-      {16b110111, 16h0002, 16h0002, 16h0001, 16b1, 16b0, 16b0},              //index: 3,00011    2 <= 2
-      
-      {16b100000, 16hffff, 16h0004, 16hfff0, 16b0, 16b0, 16b0},              //index: 2,00010   shift left
-      {16b100001, 16hffff, 16h0004, 16h0fff, 16b0, 16b0, 16b0},              //index: 1,00001   shift right
-      {16b100011, 16hf0ff, 16h0004, 16hff0f, 16b0, 16b0, 16b0}               //index: 0,00000   shift right arith
-      
-    };
+    auto_test_mode = io_dip[0][1];
     
-    // get testcase a,b,ALUFN[5:0] from testcases array accounding to the counter value representing test_case_index
-    test_case_index = counter.value;
-    test_case_alunf = testcases[test_case_index][6][5:0];
-    test_case_a = testcases[test_case_index][5];
-    test_case_b = testcases[test_case_index][4];
-    correct_result = testcases[test_case_index][3];
-    correct_z = testcases[test_case_index][2][0];
-    correct_v = testcases[test_case_index][1][0];
-    correct_n = testcases[test_case_index][0][0];
+    store.store_a_sig = io_button[3]; // set the left button to store the switches value to a
+    store.store_b_sig = io_button[4]; // set the right button to store the switches value to b
+    store.dip[7:0] = io_dip[1]; // as the switches are in a set, right set of 8 to the 8 7:LSB value
+    store.dip[15:8] = io_dip[2]; // set the middle set to the MSB:8 values
     
-    // get results form alu
-    alu.a = test_case_a;
-    alu.b = test_case_b;
-    alu.alufn = test_case_alunf;
-    alu_result = alu.out;
-    alu_z = alu.z;
-    alu_v = alu.v;
-    alu_n = alu.n;
+    alu.a = store.currenta; // connect the stored A values to the ALU A
+    alu.b = store.currentb; // connect the stored B values to the ALU B
+    alu.alufn = io_dip[0][7:2]; // set ALUFN to be the 6 bit of the first set of dip switches
+    io_led[0][7:2] = io_dip[0][7:2];
     
-    // display the correctness of answers
-    io_led[2][7:0] = alu_result[15:8];                     // display most significant 16 bits of alu.out for easy debug
-    io_led[1][7:0] = alu_result[7:0];                      // display least significant 16 bits of alu.out for easy debug
-    io_led[0][7:3] = 5x{(correct_result == alu_result)};   // io_led[0][7:3] are on when alu.out is correct
-    io_led[0][0] = (correct_z == alu_z);                   // io_led[0][0] is on when alu.z is correct
-    io_led[0][1] = (correct_v == alu_v);                   // io_led[0][0] is on when alu.v is correct
-    io_led[0][2] = (correct_n == alu_n);                   // io_led[0][0] is on when alu.n is correct
     
-    // index in hex
-    display_hex_low = counter.value[3:0];
-    display_hex_high = counter.value[4];
+    io_led[2][7:0] = alu.out[15:8];
+    io_led[1][7:0] = alu.out[7:0];
     
-    // display test case index in 7-seg display in hex
-    seg.values = {4h0, 4h0, display_hex_high, display_hex_low};
-     
-    io_seg = ~seg.seg;      // connect segments to the driver
-    io_sel = ~seg.sel;      // connect digit select to the driver
     
-    // mistake stopper
-    mistake_stopper.d = ((correct_result != alu_result) | (correct_z != alu_z) | (correct_v != alu_v) | (correct_n != alu_n));
+    autotest.stop_when_error = io_dip[0][0];
     
-    // stop the clk of the counter when io_dip[0][0] is on and mistake occurs
-    // if mistakes occur but io_dip[0][0] is not on, continue without stopping
-    if(io_dip[0][0]){
-      if(mistake_stopper.q){
-           counter.clk = 0;
-      }
+    if(auto_test_mode){
+    io_led = autotest.leds;
+    io_seg = autotest.iosegvalues;
+    io_sel = autotest.ioselvalues;
+    
     }
-    
-    // stop the clk of the counter when finish running 25 test cases
-    end_stopper.d = (counter.value == 5b11000);
-    if(end_stopper.q){
-      counter.clk = 0;
-    }
-    
   }
   
 }
