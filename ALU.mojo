@@ -13,8 +13,8 @@
     <src>shifter.luc</src>
     <src>store.luc</src>
     <src>seven_seg.luc</src>
-    <src>addRemainder9.luc</src>
     <src>boole.luc</src>
+    <src>addRemainder9.luc</src>
     <ucf lib="true">io_shield.ucf</ucf>
     <ucf lib="true">mojo.ucf</ucf>
     <component>decoder.luc</component>

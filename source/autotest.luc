@@ -2,6 +2,8 @@ module autotest (
     input clk,  // clock
     input rst,  // reset
     input stop_when_error,
+    input v_selector,
+    input n_selector,
     output leds[3][8],
     output iosegvalues[8],
     output ioselvalues[4]
@@ -58,7 +60,7 @@ module autotest (
     testcases =      
     { 
       {16b000000, 16h0002, 16h0002, 16h0004, 16b0, 16b0, 16b0},              //index: 24,11000    2 + 2 = 4
-      {16b000000, 16h7fff, 16h0001, 16h8001, 16b0, 16b1, 16b1},              //index: 23,10111    32767 + 1 = -32768, overflow
+      {16b000000, 16h7fff, 16h0001, 16h8000, 16b0, 16b1, 16b1},              //index: 23,10111    32767 + 1 = -32768, overflow
       {16b000000, 16hfff6, 16h000a, 16h0000, 16b1, 16b0, 16b0},              //index: 22,10110    -10 + 10 = 0
       
       {16b000001, 16h0002, 16h0002, 16h0000, 16b1, 16b0, 16b0},              //index: 21,10101    2 - 2 = 0
@@ -101,6 +103,11 @@ module autotest (
     correct_z = testcases[test_case_index][2][0];
     correct_v = testcases[test_case_index][1][0];
     correct_n = testcases[test_case_index][0][0];
+    
+    if(test_case_index==d23){
+      correct_n = n_selector;
+      correct_v = v_selector;
+    }
     
     // get results form alu
     alu.a = test_case_a;
